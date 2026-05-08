@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+*.so
+.DS_Store
+.ipynb_checkpoints/
+
+# Training artifacts
+ckpt/
+ckpt*/
+checkpoint/
+results/
+results*/
+wandb/
+runs/
+*.out
+*.log
+*.safetensors
+*.pt
+*.pth
+
+# Data and local preprocessing outputs
+data/
+*.npy
+
+# Notebook and environment clutter
+*.ipynb
+.env
+.venv/
+venv/
