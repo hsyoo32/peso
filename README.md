@@ -157,6 +157,8 @@ python quick_test_run2.py --gpu1 0 --gpu2 1
 
 Use `--gpu2 none` for a single-GPU run. The launcher sets `CUDA_VISIBLE_DEVICES`, uses `lora_kldiv_latest` with `continual_loss_weight=2.0`, and writes checkpoints/results under `Fine-tuning/ckpt/` and `Fine-tuning/results/`.
 
+For storage efficiency, non-final blocks keep only the saved `embed_tokens` and `lm_head` modules needed for evaluation, while the final checkpoint stores the accumulated continual adapter state. The `--use_final_model` evaluation mode loads the final checkpoint and restores the requested block's saved modules before testing.
+
 ### 5. Evaluate PESO
 
 If training is already complete and you only need to rerun evaluation, call the test script directly with `--use_final_model`:
@@ -192,7 +194,7 @@ temperature = 0.8
 num_blocks = 5
 ```
 
-The reported evaluation protocol runs over all chronological blocks in order with `--test_all_blocks` and evaluates from the final checkpoint with `--use_final_model`.
+The reported evaluation protocol runs over all chronological blocks in order with `--test_all_blocks` and evaluates from this compact final-checkpoint layout with `--use_final_model`.
 
 The `scripts/run_peso.sh` and `scripts/eval_peso.sh` files are lightweight wrappers for custom paths. For reproducing the paper-style run, prefer `Fine-tuning/quick_test_run2.py` or the manual commands below.
 
