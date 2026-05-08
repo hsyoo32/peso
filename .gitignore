@@ -18,8 +18,7 @@ runs/
 *.pt
 *.pth
 
-# Data and local preprocessing outputs
-data/
+# Local preprocessing outputs
 *.npy
 
 # Notebook and environment clutter
