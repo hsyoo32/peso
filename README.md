@@ -161,28 +161,7 @@ For storage efficiency, non-final blocks keep only the saved `embed_tokens` and 
 
 ### 5. Re-run Evaluation Only
 
-The `quick_test_run2.py` launcher already runs evaluation after training. If training is complete and you only need to rerun evaluation, call the test script directly with `--use_final_model`:
-
-```bash
-cd ICLR_code/Fine-tuning
-
-CUDA_VISIBLE_DEVICES=0,1 \
-torchrun --nproc_per_node=2 --master_port=1234 continual_test.py \
-  --ckpt_path ./ckpt/Instruments_cl_ori/lama3-1b_edim32_beta0.0/data_v2/QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5 \
-  --base_model meta-llama/Llama-3.2-1B \
-  --dataset Instruments_cl_ori \
-  --data_path ../data \
-  --results_file ./results/peso_instruments.json \
-  --test_batch_size 1 \
-  --num_beams 10 \
-  --index_file .index.epoch20000_edim32_beta0.0.json \
-  --shift_flag lora_kldiv_latest \
-  --num_blocks 5 \
-  --test_all_blocks \
-  --use_final_model \
-  --lora_target_modules q_proj,v_proj,k_proj,o_proj,gate_proj,down_proj,up_proj \
-  --lora_modules_to_save embed_tokens,lm_head
-```
+The `quick_test_run2.py` launcher already runs evaluation after training. If training is complete and you only need to rerun evaluation, use the evaluation command in [Manual Commands](#manual-commands).
 
 The launcher and manual commands use the paper-style PESO configuration:
 
