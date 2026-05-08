@@ -147,38 +147,42 @@ data/Instruments_cl_ori/Instruments_cl_ori.index.epoch20000_edim32_beta0.0.json
 
 ### 4. Train PESO
 
-```bash
-cd ICLR_code
+The focused paper-style launcher runs PESO training, extracts the per-block saved modules used by final-model evaluation, and then evaluates all blocks in chronological order:
 
-GPU_COUNT=2 \
-BASE_MODEL=meta-llama/Llama-3.2-1B \
-DATASET=Instruments_cl_ori \
-DATA_PATH=../data \
-OUTPUT_DIR=./ckpt/peso_instruments \
-INDEX_FILE=.index.epoch20000_edim32_beta0.0.json \
-SHIFT_FLAG=lora_kldiv_latest \
-bash scripts/run_peso.sh
+```bash
+cd ICLR_code/Fine-tuning
+
+python quick_test_run2.py --gpu1 0 --gpu2 1
 ```
 
-`run_peso.sh` trains with `--skip_block0` by default. In the current code, this makes the trainer look for a sibling pretraining checkpoint at `QUICK_ws20.msl-1.temp0.8.sflora_pretrain.blocks5/block_0` under the same parent directory as `OUTPUT_DIR`. If it exists, that pretrained `block_0` checkpoint is copied into the current run and continual training starts from later blocks. If it is not found, block 0 is trained normally.
+Use `--gpu2 none` for a single-GPU run. The launcher sets `CUDA_VISIBLE_DEVICES`, uses `lora_kldiv_latest` with `continual_loss_weight=2.0`, and writes checkpoints/results under `Fine-tuning/ckpt/` and `Fine-tuning/results/`.
 
 ### 5. Evaluate PESO
 
-```bash
-cd ICLR_code
+If training is already complete and you only need to rerun evaluation, call the test script directly with `--use_final_model`:
 
-GPU_COUNT=2 \
-BASE_MODEL=meta-llama/Llama-3.2-1B \
-DATASET=Instruments_cl_ori \
-DATA_PATH=../data \
-CKPT_PATH=./ckpt/peso_instruments \
-RESULTS_FILE=./results/peso_instruments.json \
-INDEX_FILE=.index.epoch20000_edim32_beta0.0.json \
-SHIFT_FLAG=lora_kldiv_latest \
-bash scripts/eval_peso.sh
+```bash
+cd ICLR_code/Fine-tuning
+
+CUDA_VISIBLE_DEVICES=0,1 \
+torchrun --nproc_per_node=2 --master_port=1234 continual_test.py \
+  --ckpt_path ./ckpt/Instruments_cl_ori/lama3-1b_edim32_beta0.0/data_v2/QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5 \
+  --base_model meta-llama/Llama-3.2-1B \
+  --dataset Instruments_cl_ori \
+  --data_path ../data \
+  --results_file ./results/peso_instruments.json \
+  --test_batch_size 1 \
+  --num_beams 10 \
+  --index_file .index.epoch20000_edim32_beta0.0.json \
+  --shift_flag lora_kldiv_latest \
+  --num_blocks 5 \
+  --test_all_blocks \
+  --use_final_model \
+  --lora_target_modules q_proj,v_proj,k_proj,o_proj,gate_proj,down_proj,up_proj \
+  --lora_modules_to_save embed_tokens,lm_head
 ```
 
-The scripts call `Fine-tuning/continual_train.py` and `Fine-tuning/continual_test.py` with the paper-style PESO configuration:
+The launcher and manual commands use the paper-style PESO configuration:
 
 ```text
 shift_flag = lora_kldiv_latest
@@ -188,9 +192,9 @@ temperature = 0.8
 num_blocks = 5
 ```
 
-The reported evaluation protocol runs over all chronological blocks in order with `--test_all_blocks`.
+The reported evaluation protocol runs over all chronological blocks in order with `--test_all_blocks` and evaluates from the final checkpoint with `--use_final_model`.
 
-The `Fine-tuning/quick_test_run.py` and `Fine-tuning/quick_test_run2.py` launchers are convenience scripts for local sweeps. The public reproduction entrypoints are the wrappers under `scripts/`.
+The `scripts/run_peso.sh` and `scripts/eval_peso.sh` files are lightweight wrappers for custom paths. For reproducing the paper-style run, prefer `Fine-tuning/quick_test_run2.py` or the manual commands below.
 
 ## Manual Commands
 
@@ -199,9 +203,10 @@ For direct fine-tuning/evaluation without wrappers:
 ```bash
 cd ICLR_code/Fine-tuning
 
+CUDA_VISIBLE_DEVICES=0,1 \
 torchrun --nproc_per_node=2 --master_port=1234 continual_train.py \
   --base_model meta-llama/Llama-3.2-1B \
-  --output_dir ./ckpt/peso_instruments \
+  --output_dir ./ckpt/Instruments_cl_ori/lama3-1b_edim32_beta0.0/data_v2/QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5 \
   --dataset Instruments_cl_ori \
   --data_path ../data \
   --per_device_batch_size 8 \
@@ -216,7 +221,6 @@ torchrun --nproc_per_node=2 --master_port=1234 continual_train.py \
   --max_his_len 20 \
   --only_train_response \
   --num_blocks 5 \
-  --skip_block0 \
   --shift_flag lora_kldiv_latest \
   --continual_loss_weight 2.0 \
   --lora_target_modules q_proj,v_proj,k_proj,o_proj,gate_proj,down_proj,up_proj \
@@ -224,8 +228,15 @@ torchrun --nproc_per_node=2 --master_port=1234 continual_train.py \
 ```
 
 ```bash
+python extract_modules_subset.py \
+  ./ckpt/Instruments_cl_ori/lama3-1b_edim32_beta0.0/data_v2/QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5 \
+  5
+```
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 \
 torchrun --nproc_per_node=2 --master_port=1234 continual_test.py \
-  --ckpt_path ./ckpt/peso_instruments \
+  --ckpt_path ./ckpt/Instruments_cl_ori/lama3-1b_edim32_beta0.0/data_v2/QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5 \
   --base_model meta-llama/Llama-3.2-1B \
   --dataset Instruments_cl_ori \
   --data_path ../data \
@@ -236,6 +247,7 @@ torchrun --nproc_per_node=2 --master_port=1234 continual_test.py \
   --shift_flag lora_kldiv_latest \
   --num_blocks 5 \
   --test_all_blocks \
+  --use_final_model \
   --lora_target_modules q_proj,v_proj,k_proj,o_proj,gate_proj,down_proj,up_proj \
   --lora_modules_to_save embed_tokens,lm_head
 ```
