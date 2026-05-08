@@ -155,13 +155,13 @@ cd ICLR_code/Fine-tuning
 python quick_test_run2.py --gpu1 0 --gpu2 1
 ```
 
-Use `--gpu2 none` for a single-GPU run. The launcher sets `CUDA_VISIBLE_DEVICES`, uses `lora_kldiv_latest` with `continual_loss_weight=2.0`, and writes checkpoints/results under `Fine-tuning/ckpt/` and `Fine-tuning/results/`.
+The launcher sets `CUDA_VISIBLE_DEVICES`, uses `lora_kldiv_latest` with `continual_loss_weight=2.0`, and writes checkpoints/results under `Fine-tuning/ckpt/` and `Fine-tuning/results/`.
 
 For storage efficiency, non-final blocks keep only the saved `embed_tokens` and `lm_head` modules needed for evaluation, while the final checkpoint stores the accumulated continual adapter state. The `--use_final_model` evaluation mode loads the final checkpoint and restores the requested block's saved modules before testing.
 
-### 5. Evaluate PESO
+### 5. Re-run Evaluation Only
 
-If training is already complete and you only need to rerun evaluation, call the test script directly with `--use_final_model`:
+The `quick_test_run2.py` launcher already runs evaluation after training. If training is complete and you only need to rerun evaluation, call the test script directly with `--use_final_model`:
 
 ```bash
 cd ICLR_code/Fine-tuning
