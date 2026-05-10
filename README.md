@@ -201,6 +201,8 @@ torchrun --nproc_per_node=2 --master_port=1234 continual_train.py \
   --max_seq_len -1 \
   --max_his_len 20 \
   --only_train_response \
+  --wandb_project data_v2 \
+  --wandb_run_name QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5 \
   --num_blocks 5 \
   --shift_flag lora_kldiv_latest \
   --continual_loss_weight 2.0 \
@@ -221,7 +223,7 @@ torchrun --nproc_per_node=2 --master_port=1234 continual_test.py \
   --base_model meta-llama/Llama-3.2-1B \
   --dataset Instruments_cl_ori \
   --data_path ../data \
-  --results_file ./results/peso_instruments.json \
+  --results_file ./results/Instruments_cl_ori/lama3-1b_edim32_beta0.0/data_v2/QUICK_ws20.msl-1.temp0.8.sflora_kldiv_latest_cl_2.0.blocks5.json \
   --test_batch_size 1 \
   --num_beams 10 \
   --index_file .index.epoch20000_edim32_beta0.0.json \
@@ -250,10 +252,10 @@ The code dispatches variants by substrings in `--shift_flag`, so older internal 
 
 ## Release Notes
 
-- Do not commit `Fine-tuning/ckpt/`, `Fine-tuning/results/`, `Fine-tuning/wandb/`, `checkpoint/`, or local `data/` directories.
-- Large datasets and pretrained checkpoints should be distributed through an external artifact host.
-- `Fine-tuning/quick_test_run.py` and `Fine-tuning/quick_test_run2.py` provide convenient launchers for running predefined experiment sweeps. The shell scripts above are the minimal public interface, while the quick launchers are useful for reproducing or extending the paper experiments.
-- Final expected metrics should be updated after the public reproduction run is fixed and verified.
+- Release JSON data files are included under `data/`.
+- Text embedding arrays (`*.npy`), RQ-VAE checkpoints, LLM checkpoints, WandB runs, generated result files, and fine-tuning checkpoints are excluded from git.
+- Large pretrained artifacts should be distributed through an external artifact host.
+- `Fine-tuning/quick_test_run2.py` is the focused paper-style launcher. `scripts/run_peso.sh` and `scripts/eval_peso.sh` are lightweight wrappers for custom paths.
 
 ## Citation
 
